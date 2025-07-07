@@ -1,36 +1,39 @@
 // server.js
-const express = require('express');
-const webPush = require('web-push');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import webPushPkg from 'web-push';
+
+const { setVapidDetails, sendNotification } = webPushPkg;
 
 const app = express();
 const PORT = 5000;
 
 // 🔐 Your VAPID keys
 const publicKey = 'BGuH-BZdpShuJMHisDaOvZCQgiKiON4PvjINGmKtxkB6xOPESoCHxd7MmcKiyVtYrfOGepMu3wnhN2CDTa26YwE';
-const privateKey = 'UWRuioSXq3nVyRCq0sgYYB7_MtAbRUl1wBJ5QDSWVSA'; 
+const privateKey = 'UWRuioSXq3nVyRCq0sgYYB7_MtAbRUl1wBJ5QDSWVSA';
 
-webPush.setVapidDetails(
+setVapidDetails(
   'mailto:bharatlal.kumar@technians.com',
   publicKey,
   privateKey
 );
 
 app.use(cors({
-   origin: ['http://localhost:3000'], // OR your frontend domain in prod
+  origin: ['http://localhost:3000'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   credentials: true
 }));
+
 app.use(bodyParser.json());
 
-// 👇 Store subscriptions temporarily (in-memory for demo)
+// Store subscriptions in-memory (for demo only)
 let subscriptions = [];
 
 app.post('/subscribe', (req, res) => {
   const subscription = req.body;
-  subscriptions.push(subscription); // Store in DB in real apps
+  subscriptions.push(subscription);
   res.status(201).json({ message: 'Subscribed successfully' });
 });
 
@@ -41,9 +44,9 @@ app.post('/sendNotification', (req, res) => {
     url: '/sendNotification'
   });
 
-  const sendPromises = subscriptions.map(sub =>
-    webPush.sendNotification(sub, notificationPayload)
-  );
+  const sendPromises = subscriptions
+    .filter(sub => sub?.endpoint?.startsWith('https://'))
+    .map(sub => sendNotification(sub, notificationPayload));
 
   Promise.all(sendPromises)
     .then(() => res.status(200).json({ message: 'Push sent' }))
@@ -54,5 +57,5 @@ app.post('/sendNotification', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
