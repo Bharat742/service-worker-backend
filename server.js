@@ -18,13 +18,11 @@ webPush.setVapidDetails(
 );
 
 app.use(cors({
-   origin: ['http://localhost:3000', 'https://pwa-react-single-page.netlify.app'], // OR your frontend domain in prod
+   origin: ['http://localhost:3000'], // OR your frontend domain in prod
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
   credentials: true
 }));
-
-app.options('*', cors());
 app.use(bodyParser.json());
 
 // 👇 Store subscriptions temporarily (in-memory for demo)
